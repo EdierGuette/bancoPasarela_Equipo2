@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Resultado del Pago</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; background: #f0f0f0; padding: 40px; }
+    .card { background: white; padding: 30px; border-radius: 10px; max-width: 500px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .estado.aprobado { color: green; }
+    .estado.rechazado { color: red; }
+    .icono { font-size: 50px; }
+    button { margin-top: 20px; padding: 10px 25px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background-color: #0056b3; }
+  </style> 
+</head>
+<body>
+  <div class="card">
+    <h2>Resultado del Pago</h2>
+    <div id="resultado"></div>
+    <button onclick="finalizar()">Finalizar pago</button>
+  </div>
+
+  <script>
+    const data = JSON.parse(localStorage.getItem('resultadoPago'));
+    const contenedor = document.getElementById('resultado');
+    if (data) {
+      const estado = data.estado || '';
+      const valor = data.datos && data.datos.valor !== undefined ? data.datos.valor : '';
+      const nombre = data.datos && data.datos.nombre ? data.datos.nombre : '';
+      const documento = data.datos && data.datos.documento ? data.datos.documento : '';
+      const correo = data.datos && data.datos.correo ? data.datos.correo : '';
+      const icono = estado.toLowerCase() === 'aprobado' ? '✅' : '❌';
+      contenedor.innerHTML = `
+        <p class="icono">${icono}</p>
+        <p class="estado ${estado.toLowerCase()}"><strong>${estado}</strong></p>
+        <p><strong>Nombre:</strong> ${nombre}</p>
+        <p><strong>Documento:</strong> ${documento}</p>
+        <p><strong>Correo:</strong> ${correo}</p>
+        <p><strong>Valor:</strong> $${valor}</p>
+      `;
+    } else {
+      contenedor.innerHTML = '<p>No hay datos disponibles.</p>';
+    }
+
+    function finalizar() {
+      localStorage.clear();
+      window.location.href = '/pagar.html?reset=true';
+    }
+  </script>
+</body>
+</html>

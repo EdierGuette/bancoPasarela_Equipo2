@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pasarela de Pago</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+    .card { background: white; padding: 20px; border-radius: 10px; max-width: 800px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    label { display: block; font-weight: bold; margin-bottom: 5px; }
+    input, select { width: 95%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; }
+    button { margin-top: 20px; padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background-color: #218838; }
+    .input-with-symbol {
+      display: flex;
+      align-items: center;
+    }
+    .input-with-symbol span {
+      margin-right: 5px;
+      font-weight: bold;
+      font-size: 1.2em;
+    }
+    .input-with-symbol input {
+      flex: 1;
+      width: auto;
+    }
+    #volverCursosBtn {
+      background-color: #007bff;
+      margin-left: 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
+    #volverCursosBtn:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Confirmación de Pago</h2>
+    <form id="pagoForm">
+      <div class="grid">
+        <div>
+          <label>Documento:</label>
+          <input type="text" name="documento" required />
+        </div>
+        <div>
+          <label>Correo:</label>
+          <input type="email" name="correo" required />
+        </div>
+        <div>
+          <label>Nombre:</label>
+          <input type="text" name="nombre" required />
+        </div>
+        <div>
+          <label>Teléfono:</label>
+          <input type="text" name="telefono" required />
+        </div>
+        <div>
+          <label>Dirección:</label>
+          <input type="text" name="direccion" required />
+        </div>
+        <div>
+          <label>Tipo de Persona:</label>
+          <select name="tipoPersona">
+            <option>Natural</option>
+            <option>Jurídica</option>
+          </select>
+        </div>
+        <div>
+          <label>Tipo de Banco:</label>
+          <select name="tipoBanco">
+            <option>Bancolombia</option>
+            <option>Nequi</option>
+            <option>Davivienda</option>
+          </select>
+        </div>
+        <div>
+          <label>Valor:</label>
+          <div class="input-with-symbol">
+            <span>$</span>
+            <input type="number" name="valor" required />
+          </div>
+        </div>
+      </div>
+      <button type="submit" id="irAlBancoBtn">Ir al banco</button>
+    </form>
+  </div>
+
+  <script>
+    window.onload = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const reset = urlParams.get('reset');
+      if (reset === 'true') {
+        // Do not fetch and populate form data, keep form empty
+        // Disable "Ir al banco" button
+        const irAlBancoBtn = document.getElementById('irAlBancoBtn');
+        irAlBancoBtn.disabled = true;
+
+        // Add "Volver a Cursos" button
+        const volverBtn = document.createElement('button');
+        volverBtn.id = 'volverCursosBtn';
+        volverBtn.type = 'button';
+        volverBtn.textContent = 'Volver a Cursos';
+        volverBtn.onclick = () => {
+          // Set flag in localStorage to enable "Ver Curso" button on index.html
+          localStorage.setItem('enableVerCurso', 'true');
+          window.location.href = 'http://localhost:3000/index.html?reset=true';
+        };
+
+        irAlBancoBtn.parentNode.appendChild(volverBtn);
+
+        return;
+      }
+      const res = await fetch('/api/datos');
+      const data = await res.json();
+      Object.entries(data).forEach(([key, value]) => {
+        const input = document.querySelector(`[name="${key}"]`);
+        if (input) input.value = value;
+      });
+    };
+
+    document.getElementById('pagoForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = Object.fromEntries(new FormData(e.target));
+
+      // Enviar al backend para guardar temporalmente
+      await fetch('/api/pagar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      // Enviar al banco
+      const response = await fetch('/api/enviar-banco', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+      localStorage.setItem('resultadoPago', JSON.stringify(result));
+
+      // Clear all form fields after submission
+      e.target.reset();
+
+      // Delay redirect to allow form reset to take effect
+      setTimeout(() => {
+        window.location.href = '/resultado.html';
+      }, 500);
+    });
+  </script>
+</body>
+</html>
