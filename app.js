@@ -40,7 +40,7 @@ app.post('/api/pagar', (req, res) => {
   const paymentApproved = true;
 
   if (paymentApproved) {
-    res.json({ paymentStatusId: paymentStatusId, redirectUrl: 'http://localhost:3003/' });
+    res.json({ paymentStatusId: paymentStatusId, redirectUrl: 'https://cursosdisponibles-equipo4.onrender.com/' });
   } else {
     res.status(400).json({ error: 'Payment not approved' });
   }
